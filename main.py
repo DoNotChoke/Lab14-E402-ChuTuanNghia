@@ -4,24 +4,9 @@ import os
 import time
 from engine.runner import BenchmarkRunner
 from agent.main_agent import MainAgent
+from engine.retrieval_eval import RetrievalEvaluator
+from engine.llm_judge import LLMJudge
 
-# Giả lập các components Expert
-class ExpertEvaluator:
-    async def score(self, case, resp): 
-        # Giả lập tính toán Hit Rate và MRR
-        return {
-            "faithfulness": 0.9, 
-            "relevancy": 0.8,
-            "retrieval": {"hit_rate": 1.0, "mrr": 0.5}
-        }
-
-class MultiModelJudge:
-    async def evaluate_multi_judge(self, q, a, gt): 
-        return {
-            "final_score": 4.5, 
-            "agreement_rate": 0.8,
-            "reasoning": "Cả 2 model đồng ý đây là câu trả lời tốt."
-        }
 
 async def run_benchmark_with_results(agent_version: str):
     print(f"🚀 Khởi động Benchmark cho {agent_version}...")
@@ -37,7 +22,7 @@ async def run_benchmark_with_results(agent_version: str):
         print("❌ File data/golden_set.jsonl rỗng. Hãy tạo ít nhất 1 test case.")
         return None, None
 
-    runner = BenchmarkRunner(MainAgent(), ExpertEvaluator(), MultiModelJudge())
+    runner = BenchmarkRunner(MainAgent(), RetrievalEvaluator(), LLMJudge())
     results = await runner.run_all(dataset)
 
     total = len(results)
@@ -51,16 +36,18 @@ async def run_benchmark_with_results(agent_version: str):
     }
     return results, summary
 
+
 async def run_benchmark(version):
     _, summary = await run_benchmark_with_results(version)
     return summary
 
+
 async def main():
     v1_summary = await run_benchmark("Agent_V1_Base")
-    
+
     # Giả lập V2 có cải tiến (để test logic)
     v2_results, v2_summary = await run_benchmark_with_results("Agent_V2_Optimized")
-    
+
     if not v1_summary or not v2_summary:
         print("❌ Không thể chạy Benchmark. Kiểm tra lại data/golden_set.jsonl.")
         return
@@ -81,6 +68,7 @@ async def main():
         print("✅ QUYẾT ĐỊNH: CHẤP NHẬN BẢN CẬP NHẬT (APPROVE)")
     else:
         print("❌ QUYẾT ĐỊNH: TỪ CHỐI (BLOCK RELEASE)")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
